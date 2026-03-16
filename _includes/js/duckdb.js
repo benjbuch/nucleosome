@@ -9,6 +9,11 @@ async function initDuckDB() {
   const worker = new Worker(workerUrl);
   db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger('WARNING'), worker);
   await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+
+  // Register remote parquet files so DuckDB WASM can fetch them via HTTP.
+  for (const url of [DATA_URL, PROTEINS_URL, MASSES_URL, PTM_URL, WATER_URL]) {
+    await db.registerFileURL(url, url, duckdb.DuckDBDataProtocol.HTTP, false);
+  }
 }
 
 async function queryPosition(family, position, { variantAa = null, isoform = null } = {}) {
