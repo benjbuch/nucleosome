@@ -1,0 +1,682 @@
+// ── Layout constants ──────────────────────────────────────────────────────────
+// Card column has a hard max-width so content (sequences, tables) can never
+// push it wider.  The diagram column is a fixed 170px.  Both are set once
+// and never negotiated by the browser — no fr units, no intrinsic sizing.
+$diagram-w:  170px;
+$diagram-gap: 1.5rem;
+$card-max:   calc(#{$bp-m} - #{$diagram-w} - #{$diagram-gap});
+
+// ── Type scale ───────────────────────────────────────────────────────────────
+// Five steps only.  $fs-xs is the floor — nothing in the UI goes smaller.
+$fs-xl:  1.5rem;   // page title
+$fs-l:   1.15rem;  // search input
+$fs-m:   0.92rem;  // body / slot headers / table body
+$fs-s:   0.84rem;  // secondary text, captions, controls
+$fs-xs:  0.80rem;  // smallest allowed: table headers, metadata, badges
+
+// Page layout
+.page-wrap {
+  max-width: #{$bp-l};
+  margin: 0 auto;
+  padding: 3rem 2rem 2rem;
+}
+
+// Header
+.site-title {
+  font-family: var(--font-serif);
+  font-size: $fs-xl;
+  font-weight: 700;
+  color: var(--text-strong);
+  letter-spacing: -0.01em;
+  margin-bottom: 1.5rem;
+  max-width: $card-max;
+}
+
+// Search input
+.search-wrap {
+  margin-bottom: 0.4rem;
+  max-width: $card-max;
+}
+
+#notation-input {
+  font-family: var(--font-mono);
+  font-size: $fs-l;
+  border: 2px solid var(--border-subtle);
+  border-radius: 6px;
+  background: var(--surface-raised);
+  color: var(--text-strong);
+  padding: 0.45rem 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus          { border-color: var(--border-strong); }
+  &.valid          { border-color: var(--accent-green); }
+  &.invalid        { border-color: var(--accent-red); }
+}
+
+#parse-status {
+  font-family: var(--font-mono);
+  font-size: $fs-xs;
+  color: var(--text-tertiary);
+  margin-top: 0.35rem;
+  min-height: 1.2em;
+  letter-spacing: 0.01em;
+  max-width: $card-max;
+
+  &.ok  { color: var(--accent-green); }
+  &.err { color: var(--accent-red); }
+
+  .status-canonical {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+    font-family: var(--font-mono);
+  }
+
+  .status-detail {
+    color: var(--text-tertiary);
+    margin-left: 0.6em;
+
+    &::before { content: "·"; margin-right: 0.6em; opacity: 0.5; }
+  }
+}
+
+// Mode toggle
+.mode-row {
+  margin-top: 0.75rem;
+  max-width: $card-max;
+}
+
+.mode-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: $fs-xs;
+  color: var(--text-secondary);
+  user-select: none;
+
+  input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+
+    &:checked + .switch-ui {
+      background: var(--accent-blue);
+      &::after { transform: translateX(calc(var(--w) - var(--thumb) - 2 * var(--pad))); }
+    }
+  }
+}
+
+.switch-ui {
+  --w:     32px;
+  --h:     18px;
+  --thumb: 12px;
+  --pad:   3px;
+
+  display: inline-block;
+  flex-shrink: 0;
+  width:  var(--w);
+  height: var(--h);
+  background: var(--border-subtle);
+  border-radius: 99px;
+  position: relative;
+  transition: background 0.15s;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: var(--pad);
+    left: var(--pad);
+    width:  var(--thumb);
+    height: var(--thumb);
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.15s;
+  }
+}
+
+.mode-text {
+  color: var(--text-tertiary);
+}
+
+// Results
+#results {
+  margin-top: 2.5rem;
+  min-height: 3rem;
+}
+
+.scrollable-table {
+  max-height: 320px;
+  overflow: hidden auto;
+}
+
+.result-meta {
+  font-family: var(--font-sans);
+  font-size: $fs-s;
+  color: var(--text-secondary);
+  margin-bottom: 0.85rem;
+}
+
+.loading {
+  font-family: var(--font-sans);
+  font-size: $fs-m;
+  color: var(--text-tertiary);
+}
+
+// Pathogenicity score bar
+.score-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.score-bar-bg {
+  width: 60px;
+  height: 5px;
+  background: var(--surface-accent);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+}
+
+.score-num {
+  font-size: $fs-xs;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+// Class badge
+.badge {
+  display: inline-block;
+  padding: 0.1em 0.45em;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: $fs-xs;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+
+  &.pathogenic { background: #{$accent-red-a};   color: var(--accent-red); }
+  &.ambiguous  { background: #{$accent-gold-a};  color: var(--accent-gold); }
+  &.benign     { background: #{$accent-green-a}; color: var(--accent-green); }
+}
+
+// ── Nucleosome slot list ──────────────────────────────────────────────────────
+
+.nucleosome-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+// Histone family colors (same palette as the SVG diagram)
+$hcolor-H2A: #b3b300;
+$hcolor-H2B: #e31a1c;
+$hcolor-H3:  #1f78b4;
+$hcolor-H4:  #33a02c;
+
+.nuc-slot {
+  // Default border — overridden per-family by inline style in JS
+  border-left: #{$spine} solid var(--slot-color, var(--border-subtle));
+  padding-left: 1rem;
+}
+
+// ── Slot header tier ─────────────────────────────────────────────────────────
+// Single line: notation + context metadata (protein, UniProt, taxon).
+
+.slot-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6em;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+
+  code {
+    font-family: var(--font-mono);
+    font-size: $fs-m;
+  }
+
+  .ctx-port-badge {
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--accent-blue);
+    color: #fff;
+  }
+}
+
+.slot-context {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5em;
+  font-family: var(--font-sans);
+  font-size: $fs-xs;
+  color: var(--text-tertiary);
+
+  .ctx-protein {
+    color: var(--text-secondary);
+  }
+
+  .ctx-id,
+  .ctx-taxon {
+    &::before { content: "·"; margin-right: 0.5em; opacity: 0.4; }
+  }
+
+  .ctx-id {
+    font-family: var(--font-mono);
+    font-size: $fs-xs;
+    letter-spacing: 0.02em;
+  }
+}
+
+// ── Slot sequence ────────────────────────────────────────────────────────────
+
+.slot-sequence {
+  margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
+
+  > summary {
+    font-family: var(--font-sans);
+    font-size: $fs-s;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+
+    &::-webkit-details-marker { display: none; }
+    &::before {
+      font-size: $fs-l;
+      content: "▸ ";
+    }
+  }
+
+  &[open] > summary::before {
+    content: "▾ ";
+  }
+}
+
+.seq-display {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: $fs-xs;
+  line-height: 1.6;
+  letter-spacing: 0.06em;
+  word-break: break-all;
+  color: var(--text-tertiary);
+  background: var(--surface-accent);
+  padding: 0.5rem 0.6rem;
+  border-radius: 4px;
+  margin-top: 0.3rem;
+}
+
+.seq-highlight {
+  background: var(--accent-gold);
+  color: var(--text-strong);
+  border-radius: 2px;
+  padding: 0 1px;
+  font-weight: 600;
+
+  &.seq-sub {
+    background: var(--accent-red);
+    color: #fff;
+  }
+}
+
+// Port-to context: baseline drift — outlined, no fill.
+// Position where source and target contexts have different native residues.
+.seq-drift {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1.5px solid var(--text-secondary);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+// Notation mod at a drift position — fill + outline.
+// The requested change still applies, but the baseline has shifted.
+.seq-drift-mod {
+  outline: 1.5px solid var(--text-strong);
+  outline-offset: 0.5px;
+}
+
+// Neutralized: the notation's change is already native in the port-to context.
+// Gray fill + outline signals "no engineering needed."
+.seq-neutralized {
+  background: var(--text-tertiary);
+  color: var(--surface-page);
+  border: 1.5px solid var(--text-secondary);
+  border-radius: 2px;
+  padding: 0 1px;
+  font-weight: 600;
+}
+
+.seq-ptm {
+  font-size: 0.8em;
+  font-weight: 400;
+  letter-spacing: 0;
+  vertical-align: super;
+  margin-right: 1px;
+}
+
+// ── Modification tier ────────────────────────────────────────────────────────
+// Below the sequence level.  Each modification is a collapsible <details>.
+// No horizontal rules — spacing alone separates them, so the slot's
+// left-border remains the strongest visual grouping element.
+
+.mod-section {
+  margin-top: 0.75rem;
+
+  > summary {
+    font-family: var(--font-sans);
+    font-size: $fs-s;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    padding: 0.25rem 0;
+
+    &::-webkit-details-marker { display: none; }
+    &::before {
+      content: "▸ ";
+      font-size: $fs-l;
+      color: var(--text-tertiary);
+    }
+  }
+
+  &[open] > summary {
+    margin-bottom: 0.5rem;
+
+    &::before {
+      content: "▾ ";
+    }
+  }
+
+  > .mod-body {
+    padding-top: 0;
+  }
+}
+
+.context-warning {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: $fs-s;
+  color: var(--color-warning, #b45309);
+  margin-left: 0.5em;
+}
+
+// ── Array expandable list ─────────────────────────────────────────────────────
+
+.array-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+// ── Nucleosome item ──────────────────────────────────────────────────────────
+// Card and diagram sit side by side via inline-block.  Both have explicit
+// fixed widths — no fr units, no intrinsic sizing.  The browser never has to
+// negotiate column widths based on content.
+
+.nuc-item {
+  display: flex;
+  align-items: flex-start;
+  gap: $diagram-gap;
+}
+
+// ── Card (column 1) ──────────────────────────────────────────────────────────
+// Hard max-width = same value used for the search field.  overflow: hidden
+// clips any content that would try to push wider (sequences, tables).
+
+.nuc-details {
+  max-width: $card-max;
+  width: $card-max;
+  flex: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: #{$round-m};
+  overflow: hidden;
+
+  > summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.85rem;
+    background: var(--surface-accent);
+    font-family: var(--font-mono);
+    font-size: $fs-m;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+
+    &::-webkit-details-marker { display: none; }
+
+    &::before {
+      content: "▶";
+      font-size: 0.6rem;
+      color: var(--text-tertiary);
+      transition: transform 0.15s;
+      flex-shrink: 0;
+    }
+  }
+
+  &[open] > summary::before {
+    transform: rotate(90deg);
+  }
+
+  > div {
+    padding: 1.5rem 1.25rem;
+  }
+
+  // Standalone histone queries: the card wraps a virtual nucleosome.
+  // Keep the summary bar but hide "Nucleosome N" — the parsed label
+  // (e.g. "H3") remains visible so the user sees what was parsed.
+  &.is-context > summary {
+    pointer-events: none;
+
+    &::before { display: none; }
+    code { display: none; }
+
+    // Remove the leading dot from the label since there's no preceding code
+    .status-detail::before { display: none; }
+  }
+
+  // Pristine-state placeholder: occupies the card column so the layout is
+  // established before any results arrive.  Invisible but space-filling.
+  &.is-placeholder {
+    visibility: hidden;
+    min-height: 2.5rem;
+    border-color: transparent;
+  }
+}
+
+// ── Diagram panel (column 2) ─────────────────────────────────────────────────
+// Fixed width, always present in the DOM so the card never changes size.
+
+.nuc-diagram-panel {
+  width: $diagram-w;
+  flex: none;
+  min-height: 160px;
+  overflow: visible;
+
+  position: sticky;
+  top: 1rem;
+
+  svg {
+    display: block;
+    width: 160px;
+    height: auto;
+    overflow: visible;
+  }
+}
+
+// ── Table headers (used by AM tables) ────────────────────────────────────────
+
+.am-th {
+  padding: 0.4rem 0.6rem;
+  font-size: $fs-xs;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+
+// ── Context editor ──────────────────────────────────────────────────────────
+
+#context-editor {
+  margin-top: 3rem;
+  max-width: $card-max;
+  //padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+
+  > summary {
+    font-family: var(--font-sans);
+    font-size: $fs-s;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+
+    &::-webkit-details-marker { display: none; }
+    &::before {
+      font-size: $fs-l;
+      content: "▸ ";
+    }
+  }
+
+  &[open] > summary::before {
+    content: "▾ ";
+  }
+}
+
+.context-hint {
+  font-family: var(--font-sans);
+  font-size: $fs-xs;
+  color: var(--text-tertiary);
+  margin: 0.5rem 0 0.6rem;
+  line-height: 1.5;
+
+  code {
+    font-size: $fs-xs;
+    background: var(--surface-accent);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+  }
+}
+
+#context-yaml {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 16rem;
+  max-height: 40rem;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: $fs-xs;
+  line-height: 1.55;
+  tab-size: 2;
+  color: var(--text-primary);
+  background: var(--surface-accent);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 0.6rem 0.7rem;
+  outline: none;
+
+  &:focus { border-color: var(--border-strong); }
+}
+
+.context-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+
+  button {
+    font-family: var(--font-sans);
+    font-size: $fs-xs;
+    font-weight: 600;
+    padding: 0.35rem 0.85rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-subtle);
+    cursor: pointer;
+    background: var(--accent-blue);
+    color: #fff;
+    transition: opacity 0.15s;
+
+    &:hover { opacity: 0.85; }
+
+    &.btn-secondary {
+      background: transparent;
+      color: var(--text-secondary);
+
+      &:hover { background: var(--surface-accent); }
+    }
+  }
+}
+
+.context-error {
+  font-family: var(--font-mono);
+  font-size: $fs-xs;
+  color: var(--accent-red);
+}
+
+.context-applied {
+  font-family: var(--font-mono);
+  font-size: $fs-xs;
+  color: var(--accent-green);
+}
+
+// Port-to editor — reuses context editor structure, same styles
+#port-editor {
+  @extend #context-editor;
+  margin-top: 1rem;
+  border-top: none;
+}
+
+#port-yaml {
+  @extend #context-yaml;
+}
+
+// ── Onboarding hint ─────────────────────────────────────────────────────────
+
+.onboarding-hint {
+  font-family: var(--font-sans);
+  font-size: $fs-s;
+  color: var(--text-tertiary);
+  line-height: 1.6;
+  max-width: $card-max;
+  margin-top: 1rem;
+
+  p { margin: 0 0 0.5rem; }
+
+  ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0 0 0.5rem;
+
+    li {
+      padding: 0.15rem 0;
+
+      &::before {
+        content: "–";
+        margin-right: 0.5em;
+        opacity: 0.5;
+      }
+    }
+  }
+
+  code {
+    font-size: $fs-s;
+  }
+}
+

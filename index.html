@@ -1,0 +1,135 @@
+---
+layout: null
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nucleosome</title>
+  <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
+</head>
+<body>
+
+  <div class="page-wrap">
+
+    <h1 class="site-title">Nucleosome</h1>
+
+    <div class="search-wrap">
+      <input
+        type="text"
+        id="notation-input"
+        placeholder="H3:K27"
+        autocomplete="off"
+        spellcheck="false"
+        autofocus
+      >
+    </div>
+    <div id="parse-status"></div>
+
+    <div class="mode-row" id="mode-row">
+      <label class="mode-label">
+        <input type="checkbox" id="strict-toggle" checked>
+        <span class="switch-ui"></span>
+        <span class="mode-text" id="mode-text">Filter to this variant</span>
+      </label>
+    </div>
+
+    <div id="onboarding" class="onboarding-hint">
+      <p>
+        Look up histone positions, mutations, and PTMs using
+        <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12778995/">Keogh notation</a>.
+      </p>
+      <ul>
+        <li>Single position &mdash; <code>H3K27</code></li>
+        <li>Substitution &mdash; <code>H3K27M</code></li>
+        <li>PTM &mdash; <code>H4K20me3</code></li>
+        <li>Nucleosome &mdash; <code>(H3K27M H4K16ac)</code></li>
+        <li>Heterotypic nucleosomes &mdash; <code>(H3K27M H4K16ac H4K5ac)</code></li>
+        <li>Multiple nucleosomes &mdash; <code>(H3K27M)(H3K36me3)</code></li>
+      </ul>
+      <p>
+        Use <code>:</code> to separate family from position
+        (<code>H3:K27M</code>) and <code>@</code> to separate histones
+        (<code>H3:K27M @ H4:K16ac</code>) when the compact form is ambiguous.
+      </p>
+    </div>
+
+    <div id="results">
+      <!-- Skeleton keeps the two-column layout stable before any results. -->
+      <ul class="array-list"><li class="nuc-item">
+        <div class="nuc-details is-placeholder"></div>
+        <div class="nuc-diagram-panel"></div>
+      </li></ul>
+    </div>
+
+    <details id="context-editor">
+      <summary>Context</summary>
+      <p class="context-hint">
+        Edit the materialization context below. Unspecified fields fall back to
+        the master context (human canonical). Add <code>modifications</code> to
+        set default mutations or PTMs for any family.
+      </p>
+      <textarea id="context-yaml" spellcheck="false"></textarea>
+      <div class="context-actions">
+        <button id="context-apply" type="button">Apply context</button>
+        <button id="context-reset" type="button" class="btn-secondary">Reset to default</button>
+        <span id="context-error" class="context-error"></span>
+      </div>
+    </details>
+
+    <details id="port-editor">
+      <summary>Port to</summary>
+      <p class="context-hint">
+        Define a target context to port the current specification into.
+        Baseline differences between contexts are outlined; neutralized
+        modifications (already native in the target) are shown in gray.
+      </p>
+      <textarea id="port-yaml" spellcheck="false"></textarea>
+      <div class="context-actions">
+        <button id="port-apply" type="button">Apply port context</button>
+        <button id="port-reset" type="button" class="btn-secondary">Reset</button>
+        <span id="port-error" class="context-error"></span>
+      </div>
+    </details>
+
+    <details id="debug-tree" hidden>
+      <summary>Parse tree</summary>
+      <pre><code id="debug-json"></code></pre>
+    </details>
+
+  </div>
+
+  <!-- Generated vocabulary (families, PTMs) -->
+  <script src="{{ '/assets/js/vocabulary.js' | relative_url }}"></script>
+  <!-- Compiled nucleosome notation parser -->
+  <script src="{{ '/assets/js/parser.js' | relative_url }}"></script>
+
+  <script type="module">
+    import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.0/+esm';
+    import jsyaml from 'https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/+esm';
+
+    // URLs resolved by Jekyll at build time.
+    const DATA_URL     = new URL('{{ "/data/alpha_missense.parquet" | relative_url }}', document.baseURI).href;
+    const PROTEINS_URL = new URL('{{ "/data/proteins.parquet" | relative_url }}', document.baseURI).href;
+    const MASSES_URL   = new URL('{{ "/data/residue_masses.parquet" | relative_url }}', document.baseURI).href;
+    const PTM_URL      = new URL('{{ "/data/ptm_deltas.parquet" | relative_url }}', document.baseURI).href;
+    const WATER_URL    = new URL('{{ "/data/water_mass.parquet" | relative_url }}', document.baseURI).href;
+    const SVG_URL      = '{{ "/assets/img/nucleosome_topview.svg" | relative_url }}';
+
+    // Shared mutable state (referenced by all included modules below).
+    let db        = null;
+    let lastKey   = null;
+    let cachedSvg = null;
+
+    {% include js/duckdb.js %}
+    {% include js/parse.js %}
+    {% include js/render.js %}
+    {% include js/diagram.js %}
+    {% include js/slots.js %}
+    {% include js/context-editor.js %}
+    {% include js/port-editor.js %}
+    {% include js/main.js %}
+  </script>
+</body>
+</html>

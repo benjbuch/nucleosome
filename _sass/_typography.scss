@@ -1,0 +1,182 @@
+body {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  font-size: 16px;
+}
+
+h1, h2, h3, h4 {
+  color: var(--text-strong);
+  font-family: var(--font-serif);
+  font-weight: 700;
+  line-height: 1.25;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+h1 {
+  font-size: 1.8rem;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+
+h3 {
+  font-size: 1.1rem;
+  font-style: italic;
+  font-weight: 700;
+}
+
+// Heading proximity: more space above than below
+
+:is(p, div, ul, ol, table) + :is(h1, h2) {
+  margin-top: 2.5rem;
+}
+
+:is(p, div, ul, ol, table) + :is(h3, h4) {
+  margin-top: 1.8rem;
+}
+
+// Adjacent headings: tight
+
+h1 + h2,
+h2 + h3,
+h3 + h4 {
+  margin-top: var(--pad-m);
+}
+
+// Lists following headings: snug
+
+h1 + ul, h1 + ol,
+h2 + ul, h2 + ol,
+h3 + ul, h3 + ol,
+h4 + ul, h4 + ol {
+  margin-top: var(--pad-s);
+}
+
+
+// Headings at start of containers: no top margin
+
+section > h1:first-child,
+section > h2:first-child,
+.card > h1:first-child,
+.card > h2:first-child {
+  margin-top: 0;
+}
+
+p {
+  margin-bottom: var(--pad-l);
+  margin-right: var(--pad-m);
+  margin-top: var(--pad-m);
+  text-align: justify;
+}
+
+:is(p, div) + :is(h1, h2, h3, h4) {
+  margin-top: calc(2 * var(--pad-l));
+}
+
+em, i {
+  font-style: italic;
+}
+
+// ============================================================================
+// Font APEX Icons
+// ============================================================================
+
+.fa {
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  display: inline-block;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  &::before {
+    font-family: "Font APEX Large";
+  }
+}
+
+.fa-alarm-clock::before        { content: "\ec2a"; }
+.fa-alarm-snooze::before       { content: "\ec2c"; }
+.fa-ellipsis-v::before         { content: "\f142"; }
+.fa-pencil::before             { content: "\f040"; }
+.fa-rocket::before             { content: "\f135"; }
+.fa-user-circle::before        { content: "\f2bd"; }
+.fa-angle-double-down::before  { content: "\f103"; }
+.fa-angle-double-right::before { content: "\f101"; }
+.fa-angle-right::before        { content: "\f105"; }
+.fa-arrow-circle-left::before  { content: "\f0a8"; }
+.fa-arrow-circle-right::before { content: "\f0a9"; }
+.fa-arrow-left-alt::before     { content: "\ea6b"; }
+.fa-arrow-right::before        { content: "\f061"; }
+.fa-arrows-alt::before         { content: "\f0b2"; }
+.fa-ban::before                { content: "\f05e"; }
+.fa-bomb::before               { content: "\f1e2"; }
+.fa-book::before               { content: "\f02d"; }
+.fa-bug::before                { content: "\f188"; }
+.fa-camera::before             { content: "\f030"; }
+.fa-caret-right::before        { content: "\f0da"; }
+.fa-check::before              { content: "\f00c"; }
+.fa-check-circle::before       { content: "\f058"; }
+.fa-clock::before              { content: "\f017"; } // fa-clock-o
+.fa-clone::before              { content: "\f24d"; }
+.fa-compress::before           { content: "\f066"; }
+.fa-crosshairs::before         { content: "\f05b"; }
+.fa-diamond::before            { content: "\f219"; }
+.fa-exclamation::before        { content: "\f12a"; }
+.fa-external-link::before      { content: "\f08e"; }
+.fa-eye::before                { content: "\f06e"; }
+.fa-file-plus::before          { content: "\e968"; }
+.fa-file-text-o::before        { content: "\f0f6"; }
+.fa-file-wrench::before        { content: "\e96c"; }
+.fa-flag::before               { content: "\f024"; }
+.fa-flag-swallowtail::before   { content: "\ec27"; }
+.fa-flash::before              { content: "\f0e7"; }
+.fa-flask::before              { content: "\f0c3"; }
+.fa-forward::before            { content: "\f04e"; }
+.fa-hand-left::before          { content: "\f0a5"; } // fa-hand-o-left
+.fa-hand-right::before         { content: "\f0a4"; } // fa-hand-o-right
+.fa-hand-up::before            { content: "\f0a6"; } // fa-hand-o-up
+.fa-hide::before               { content: "\f070"; } // fa-eye-slash
+.fa-hourglass-start::before    { content: "\f251"; }
+.fa-lightbulb-o::before        { content: "\f0eb"; }
+.fa-link::before               { content: "\f0c1"; }
+.fa-list::before               { content: "\f03a"; }
+.fa-list-ul::before            { content: "\f0ca"; }
+.fa-location-arrow-solid::before  { content: "\ec4d"; }
+.fa-location-circle-solid::before { content: "\ec4f"; }
+.fa-long-arrow-right::before   { content: "\f178"; }
+.fa-map-marker-check::before   { content: "\ec21"; }
+.fa-map-marker-s::before       { content: "\ec1f"; }
+.fa-materialized-view::before  { content: "\eae6"; }
+.fa-moon-o::before             { content: "\f186"; }
+.fa-muted::before              { content: "\f026"; } // fa-volume-off
+.fa-nerd::before               { content: "\1f913"; } // fa-emoji-nerd
+.fa-paperclip::before          { content: "\f0c6"; }
+.fa-pause::before              { content: "\f04c"; }
+.fa-play::before               { content: "\f04b"; }
+.fa-plus-square-o::before      { content: "\f196"; }
+.fa-random::before             { content: "\f074"; }
+.fa-sequence::before           { content: "\eae9"; }
+.fa-snowflake::before          { content: "\ea62"; }
+.fa-stop::before               { content: "\f04d"; }
+.fa-support::before            { content: "\f1cd"; }
+.fa-table::before              { content: "\f0ce"; }
+.fa-tachometer::before         { content: "\f0e4"; }
+.fa-tools::before              { content: "\e944"; }
+.fa-variable::before           { content: "\eaec"; }
+.fa-vial::before               { content: "\ec3d"; }
+.fa-wrench::before             { content: "\f0ad"; }
+
+code, pre, kbd, samp {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}

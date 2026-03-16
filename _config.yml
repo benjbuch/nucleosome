@@ -1,0 +1,19 @@
+title: "Nucleosome"
+description: "Canonical histone position lookup"
+url: ""
+baseurl: "/nucleosome"
+lang: "en"
+
+markdown: kramdown
+highlighter: rouge
+
+sass:
+  sass_dir: _sass
+  style: compressed
+
+plugins:
+  - jekyll-sass-converter
+
+exclude:
+  - Gemfile
+  - Gemfile.lock

@@ -1,0 +1,300 @@
+// ============================================================================
+// Variables
+// ============================================================================
+
+@import "variables";
+
+// ============================================================================
+// CSS Custom Properties
+// ============================================================================
+
+:root {
+  // Layout
+  --footer-height: 56px;
+  --header-height: 52px;
+
+  // Text
+  --text-strong:     #{$warm-900};
+  --text-primary:    #{$warm-800};     // body text
+  --text-secondary:  #{$warm-600};     // captions, muted content
+  --text-tertiary:   #{$warm-500};     // placeholders, disabled
+
+  // Interactive
+  --link:            #{$accent-blue};  // links, interactive text
+  --focus-ring:      #{$accent-blue};  // focus outlines
+
+  // Accents
+  --accent-red:      #{$accent-red};
+  --accent-gold:     #{$accent-gold};
+  --ghs-red:         #{$iso-risk-high};
+  --accent-blue:     #{$accent-blue};
+  --accent-green:    #{$accent-green};
+
+  // Surfaces (3 tiers)
+  --surface-page:    #{$warm-100};
+  --surface-accent:  #{$warm-300};
+  --surface-raised:  #{$white};  // cards, panels
+
+  // Frosted glass backgrounds (rgba, not color-mix, for Safari compatibility)
+  --header-bg:       #{rgba($warm-300, 0.30)};
+  --footer-bg:       #{rgba($warm-300, 0.98)};
+
+  // code blocks, highlights on cards
+  --surface-inset: color-mix(in srgb, var(--text-strong) 6%, var(--surface-raised));
+
+  // hover backgrounds on page-level
+  --hover: var(--surface-accent);
+  --hover-raised: color-mix(in srgb, var(--hover) 70%, white);
+
+  --border-subtle: color-mix(in srgb, var(--text-primary) 15%, transparent);
+  --border-strong: color-mix(in srgb, var(--text-primary) 30%, transparent);
+
+  // Fonts
+  --font-mono: "TeX Gyre Cursor", ui-monospace, "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
+  --font-sans: "TeX Gyre Heros", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-serif: "TeX Gyre Pagella", "Palatino", "Palatino Linotype", "Book Antiqua", "URW Palladio L", serif;
+
+  // Spacing
+  --pad-l: #{$space-l};
+  --pad-m: #{$space-m};
+  --pad-s: #{$space-s};
+
+  --section-gap: 3rem;
+
+  // Effects
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+// Show focus ring only for keyboard navigation, not mouse clicks.
+:focus { outline: none; }
+:focus-visible {
+  outline: #{$line-l} solid var(--focus-ring);
+  outline-offset: #{$line-l};
+}
+
+// ============================================================================
+// Base Elements
+// ============================================================================
+
+* {
+  box-sizing: border-box;
+}
+
+// Standard scrollbar styling — Chrome 121+, Firefox 64+.
+// (Safari is handled separately below via the hanging-punctuation detector.)
+@supports (scrollbar-width: auto) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+
+    &:hover {
+      scrollbar-color: var(--border-subtle) transparent;
+    }
+  }
+}
+
+// Safari-only scrollbar styling.
+// hanging-punctuation is implemented only in Safari; Chrome and Firefox have
+// never shipped it, making it a reliable CSS-only Safari feature query.
+// Reset standard properties to auto so they don't override the webkit rules,
+// then apply webkit-only styling (option 4 from scrollbar-test.html).
+@supports (hanging-punctuation: first) {
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+
+  *::-webkit-scrollbar        { width: 6px; height: 6px; }
+  *::-webkit-scrollbar-track  { background: transparent; }
+  *::-webkit-scrollbar-thumb  { background: transparent; border-radius: 3px; }
+  *:hover::-webkit-scrollbar-thumb { background: var(--border-subtle); }
+  *:hover                     { --fix: ; }
+}
+
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  // Reserve scrollbar space at all times so the viewport width never changes
+  // when a scrollbar appears or disappears (e.g. on first typing, sequence
+  // expansion, or query transitions).  Without this, every height change that
+  // crosses the scroll threshold triggers a 15px horizontal reflow.
+  scrollbar-gutter: stable;
+}
+
+body {
+  background: var(--surface-page);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+}
+
+code {
+  background: var(--surface-inset);
+  border-radius: #{$round-s};
+  padding: 0.1em 0.35em;
+}
+
+pre {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: #{$round-s};
+  overflow-x: auto;
+  padding: var(--pad-l);
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+// Links
+a {
+  border-radius: #{$round-s};
+  color: var(--link);
+  text-decoration: none;
+  text-decoration-skip-ink: auto;
+}
+
+a:visited {
+  color: var(--link);
+}
+
+a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+a:active {
+  color: var(--text-primary);
+}
+
+// ============================================================================
+// Utility Classes
+// ============================================================================
+
+.muted {
+  color: var(--text-tertiary);
+}
+
+.scrollable-table {
+  // This is about 10 table rows
+  border-radius: #{$round-s};
+  border: 1px solid var(--border-strong);
+  margin-top: var(--pad-l);
+  overflow-y: auto;
+
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  thead th {
+    background: var(--surface-accent);
+    border-bottom: 1px solid var(--border-subtle);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    user-select: none;
+    white-space: nowrap;
+    z-index: 10;
+  }
+
+  tbody tr:hover {
+    background-color: var(--surface-inset);
+  }
+}
+
+.tag {
+  background: var(--surface-inset);
+  border: #{$line-s} solid var(--border-subtle);
+  border-radius: #{$round-l};
+  color: var(--text-secondary);
+  display: inline-block;
+  font-size: 0.75rem;
+  margin-right: var(--pad-m);
+  margin-top: var(--pad-m);
+  padding: var(--pad-s) var(--pad-m);
+}
+
+// ============================================================================
+// Interactive elements
+// ============================================================================
+
+button,
+input {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: #{$round-s};
+  color: var(--text-secondary);
+  font-size: 1rem;
+  padding: 0.4em 0.6em;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--hover);
+}
+
+input {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  min-height: 2.2em;
+}
+
+// ============================================================================
+// Media Queries
+// ============================================================================
+
+// Dark mode
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-page:    #{$dark-100};
+    --surface-accent:  #{$dark-200};
+    --surface-raised:  #{$dark-200};
+
+    --header-bg:       #{rgba($dark-200, 0.30)};
+    --footer-bg:       #{rgba($dark-200, 0.98)};
+
+    --text-strong:     #{$dark-900};
+    --text-primary:    #{$dark-800};
+    --text-secondary:  #{$dark-600};
+    --text-tertiary:   #{$dark-500};
+
+    --link:            #{$accent-blue-light};
+    --focus-ring:      #{$accent-blue-light};
+
+    --accent-gold:     #{$accent-gold-light};
+    --accent-blue:     #{$accent-blue-light};
+    --accent-green:    #{$accent-green-light};
+
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .tag {
+    opacity: 0.85;
+  }
+}
+
+// Reduced motion preference
+
+@media (prefers-reduced-motion: reduce) {
+
+  * {
+    transition: none !important;
+  }
+}
