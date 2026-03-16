@@ -10,10 +10,15 @@ async function initDuckDB() {
   db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger('WARNING'), worker);
   await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
 
-  // Register remote parquet files so DuckDB WASM can fetch them via HTTP.
-  for (const url of [DATA_URL, PROTEINS_URL, MASSES_URL, PTM_URL, WATER_URL]) {
-    await db.registerFileURL(url, url, duckdb.DuckDBDataProtocol.HTTP, false);
-  }
+  // Fetch parquet files and register as buffers.
+  // HTTP range requests (registerFileURL) fail in Firefox on GitHub Pages,
+  // so we fetch the full files up front and register them as local buffers.
+  await Promise.all(
+    [DATA_URL, PROTEINS_URL, MASSES_URL, PTM_URL, WATER_URL].map(async url => {
+      const buf = await fetch(url).then(r => r.arrayBuffer());
+      await db.registerFileBuffer(url, new Uint8Array(buf));
+    })
+  );
 }
 
 async function queryPosition(family, position, { variantAa = null, isoform = null } = {}) {
