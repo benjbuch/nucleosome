@@ -7,7 +7,7 @@ function scoreColor(score) {
 }
 
 // Render an AM rows table into `container`. Shows meta line when showMeta=true.
-function renderTableInto(rows, info, container, { showMeta = true } = {}) {
+function renderAmTable(rows, info, container, { showMeta = true } = {}) {
   if (rows.length === 0) {
     container.innerHTML = '<p class="loading">No AlphaMissense data.</p>';
     return;
@@ -16,19 +16,27 @@ function renderTableInto(rows, info, container, { showMeta = true } = {}) {
   const nProteins = new Set(rows.map(r => r.uniprot_id)).size;
   const nTaxa     = new Set(rows.map(r => r.taxon_id)).size;
 
+  // Determine active measurement port for this slot (if any)
+  const mPortKey = info.slotFamily
+    ? `${info.slotFamily}:${info.slotIsoform ?? ''}`
+    : null;
+  const activeMPort = mPortKey ? measurementPort.get(mPortKey) : null;
+
   const rows_html = rows.map(r => {
     const score     = +r.am_pathogenicity;
     const pct       = Math.round(score * 100);
     const color     = scoreColor(score);
     const cls       = (r.am_class ?? '').toLowerCase();
-    const isoform = r.isoform && r.isoform !== 'NA' ? r.isoform : '&mdash;';
+    const isoform = r.isoform && r.isoform !== 'NA' ? r.isoform : null;
+    const isoformDisplay = isoform ?? '&mdash;';
     const varLabel  = `${r.residue ?? '?'}${info.position}${r.variant_aa}`;
+    const isActive  = activeMPort?.uniprot_id === r.uniprot_id;
 
-    return `<tr>
+    return `<tr data-uniprot="${r.uniprot_id}" data-taxon="${r.taxon_id}" data-isoform="${isoform ?? ''}"${isActive ? ' class="am-row-active"' : ''}>
       <td><code>${varLabel}</code></td>
       <td>${r.uniprot_id}</td>
       <td>${r.taxon_id}</td>
-      <td>${isoform}</td>
+      <td>${isoformDisplay}</td>
       <td>
         <div class="score-wrap">
           <div class="score-bar-bg">
@@ -61,6 +69,27 @@ function renderTableInto(rows, info, container, { showMeta = true } = {}) {
         <tbody style="font-family:var(--font-mono);font-size:0.92rem">${rows_html}</tbody>
       </table>
     </div>`;
+
+  // Click-to-port: clicking an AM row ports the slot's sequence display to
+  // that measurement's protein.  Click again to dismiss.
+  const tbody = container.querySelector('tbody');
+  if (tbody && info.slotFamily) {
+    tbody.addEventListener('click', (e) => {
+      const tr = e.target.closest('tr[data-uniprot]');
+      if (!tr) return;
+      const uid   = tr.dataset.uniprot;
+      const taxon = +(tr.dataset.taxon);
+      const iso   = tr.dataset.isoform || null;
+      const key   = `${info.slotFamily}:${info.slotIsoform ?? ''}`;
+      if (measurementPort.get(key)?.uniprot_id === uid) {
+        measurementPort.delete(key);  // toggle off
+      } else {
+        measurementPort.set(key, { uniprot_id: uid, taxon_id: taxon, isoform: iso });
+      }
+      lastKey = null;  // force re-render
+      document.getElementById('notation-input').dispatchEvent(new Event('input'));
+    });
+  }
 }
 
 // Format full MW: average in kDa (1 dp) and monoisotopic in u with
@@ -109,7 +138,7 @@ function formatSequence(sequence, modifications, drift) {
       return `<mark class="seq-drift" title="${title}">${aa}</mark>`;
     }
 
-    if (!m) return aa;
+    if (!m) return `<span title="${aa}${pos}">${aa}</span>`;
 
     const sub = m.variant;
     const ptm = m.modification;

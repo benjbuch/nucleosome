@@ -254,6 +254,13 @@ $hcolor-H4:  #33a02c;
     background: var(--accent-blue);
     color: #fff;
   }
+
+  .ctx-measurement-badge {
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--accent-gold);
+    color: var(--text-strong);
+  }
 }
 
 .slot-context {
@@ -519,6 +526,37 @@ $hcolor-H4:  #33a02c;
     height: auto;
     overflow: visible;
   }
+}
+
+// ── Layer sections ──────────────────────────────────────────────────────────
+// Each data layer (AM, screens, etc.) gets a .layer-section wrapper.
+// When only one layer exists, the header is hidden to avoid visual noise.
+
+.layer-section {
+  & + .layer-section { margin-top: 1rem; }
+}
+
+.layer-header {
+  font-family: var(--font-sans);
+  font-size: $fs-xs;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+// Hide layer header when it's the only layer section in its container
+.layer-section:only-child > .layer-header { display: none; }
+
+// ── Measurement port: clickable AM rows ──────────────────────────────────────
+
+tbody tr[data-uniprot] { cursor: pointer; }
+
+.am-row-active {
+  background: var(--surface-accent);
+  outline: 1.5px solid var(--accent-blue);
+  outline-offset: -1px;
 }
 
 // ── Table headers (used by AM tables) ────────────────────────────────────────

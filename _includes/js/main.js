@@ -67,6 +67,7 @@ inputEl.addEventListener('input', async () => {
     onboardingEl.hidden = false;
     debugEl.textContent = '';
     lastKey = null;
+    measurementPort.clear();
     updateToggleVisibility(null);
     return;
   }
@@ -89,6 +90,9 @@ inputEl.addEventListener('input', async () => {
 
   const key = info.canonical;
   if (key === lastKey) return;
+  // Only clear measurement port when the query content actually changed,
+  // not when lastKey was nulled to force a re-render (e.g. by a row click).
+  if (lastKey !== null) measurementPort.clear();
   lastKey = key;
 
   // Hide onboarding once we have a valid parse

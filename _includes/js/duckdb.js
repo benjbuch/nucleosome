@@ -19,43 +19,8 @@ async function initDuckDB() {
       await db.registerFileBuffer(url, new Uint8Array(buf));
     })
   );
-}
 
-async function queryPosition(family, position, { variantAa = null, isoform = null } = {}) {
-  const conn = await db.connect();
-  try {
-    // Build query with positional parameters to prevent injection.
-    let sql = `
-      SELECT
-        uniprot_id,
-        taxon_id,
-        isoform,
-        residue,
-        variant_aa,
-        ROUND(am_pathogenicity, 4) AS am_pathogenicity,
-        am_class
-      FROM read_parquet('${DATA_URL}')
-      WHERE family = $1
-        AND consensus_position = $2`;
-    const params = [family, position];
-
-    if (isoform) {
-      params.push(isoform);
-      sql += `\n            AND isoform = $${params.length}`;
-    }
-    if (variantAa) {
-      params.push(variantAa);
-      sql += `\n            AND variant_aa = $${params.length}`;
-    }
-    sql += `\n          ORDER BY variant_aa, am_pathogenicity DESC`;
-
-    const stmt = await conn.prepare(sql);
-    const result = await stmt.query(...params);
-    await stmt.close();
-    return result.toArray().map(r => r.toJSON());
-  } finally {
-    await conn.close();
-  }
+  await initLayers();
 }
 
 // ── Context resolution via proteins.parquet ──────────────────────────────

@@ -7,6 +7,11 @@ const SLOT_COLOR = { H2A: '#b3b300', H2B: '#e31a1c', H3: '#1f78b4', H4: '#33a02c
 // Keys: "seq:<family>:<isoform>" or "mod:<family>:<pos>".
 const detailsState = new Map();
 
+// Measurement port state: clicking an AM row temporarily ports the slot's
+// sequence display to that measurement's protein.
+// Keys: "family:isoform" → { uniprot_id, taxon_id, isoform }
+const measurementPort = new Map();
+
 function detailsKey(prefix, family, isoform, pos) {
   return pos != null
     ? `${prefix}:${family}:${pos}`
@@ -16,9 +21,16 @@ function detailsKey(prefix, family, isoform, pos) {
 // Render one nucleosome's slots as a <ul> into `container`.
 // Each modification within a slot gets its own collapsible sub-section.
 async function renderNucleosome(slots, container, key) {
+  container.innerHTML = '';
+
+  // ── Nucleosome-level layers (e.g. screen results) ──────────────────────
+  if (db && layersAt('nucleosome').length > 0) {
+    // TODO: nucleosome-level query needs the full slot set, not a single
+    // family+position.  For now this is scaffolding — no layers use it yet.
+  }
+
   const ul = document.createElement('ul');
   ul.className = 'nucleosome-list';
-  container.innerHTML = '';
   container.appendChild(ul);
 
   for (const slot of slots) {
@@ -141,12 +153,23 @@ async function renderNucleosome(slots, container, key) {
     //   - neutralized mods: notation mods already native in port-to
     let displayCtx = ctx;
     let drift = null; // Map<portPos, { from, to }>
+    const mPortKey = `${queryFamily}:${isoform ?? ''}`;
+    const mPort = measurementPort.get(mPortKey);
 
-    if (isPortActive()) {
-      const portCtx = await resolvePortContext(queryFamily, isoform);
+    if (mPort || isPortActive()) {
+      let portCtx;
+      if (mPort) {
+        // Measurement port: resolve the specific measurement protein
+        portCtx = await resolveContext(queryFamily, mPort.isoform, {
+          uniprot_id: mPort.uniprot_id,
+          taxon_id: mPort.taxon_id,
+        });
+      } else {
+        portCtx = await resolvePortContext(queryFamily, isoform);
+      }
       if (key !== lastKey) return;
 
-      if (!portCtx) {
+      if (!portCtx && !mPort) {
         // Port context requested but failed to resolve for this slot.
         // Check if the user explicitly specified an override for this family.
         const lookupKey = isoform ?? queryFamily;
@@ -208,7 +231,9 @@ async function renderNucleosome(slots, container, key) {
     const metaCtx = displayCtx ?? ctx;
     let headerHtml = `<div class="slot-header"><code>${head}</code>`;
     if (metaCtx) {
-      if (isPortActive() && displayCtx !== ctx) {
+      if (mPort && displayCtx !== ctx) {
+        headerHtml += `<code class="ctx-measurement-badge">source</code>`;
+      } else if (isPortActive() && displayCtx !== ctx) {
         headerHtml += `<code class="ctx-port-badge">port</code>`;
       }
       headerHtml += `<span class="slot-context">`
@@ -280,6 +305,12 @@ async function renderNucleosome(slots, container, key) {
 
     ul.appendChild(li);
 
+    // ── Slot-level layers (e.g. contacts, conservation) ────────────────
+    if (db && layersAt('slot').length > 0) {
+      // TODO: slot-level queries will pass all positions for this histone.
+      // No layers use this level yet.
+    }
+
     if (mods.length === 0) {
       const p = document.createElement('p');
       p.className = 'loading';
@@ -328,12 +359,11 @@ async function renderNucleosome(slots, container, key) {
         const modBody = document.createElement('div');
         modBody.className = 'mod-body';
         section.appendChild(modBody);
-        modBody.innerHTML = '<p class="loading">Loading\u2026</p>';
 
-        const variantAa = (isStrict() && dm.type === 'substitution') ? dm.sub : null;
-        const rows = await queryPosition(queryFamily, dm.pos, { variantAa, isoform });
+        const modValue = (isStrict() && dm.type === 'substitution') ? dm.sub : null;
+        const resultsByLayer = await queryLayers('modification', queryFamily, dm.pos, { modValue, isoform });
         if (key !== lastKey) return;
-        renderTableInto(rows, { position: dm.pos }, modBody, { showMeta: false });
+        renderLayerResults(resultsByLayer, { position: dm.pos, slotFamily: queryFamily, slotIsoform: isoform }, modBody, { showMeta: false });
       }
     }
   }
@@ -344,10 +374,18 @@ async function renderNucleosome(slots, container, key) {
 // "Nucleosome N" label is hidden (the grid layout is still identical,
 // preventing horizontal reflow on transitions).
 async function renderArray(nucleosomes, container, key, { dimHeader = false } = {}) {
+  // ── Array-level layers (e.g. dinucleosome data) ──────────────────────
+  if (db && layersAt('array').length > 0) {
+    // TODO: array-level query needs the full nucleosome set.
+    // No layers use this level yet.
+  }
+
+  // Build the entire tree in a detached <ul>, then swap it into the
+  // container in one shot.  This keeps old content visible while async
+  // work (context resolution, MW, layer queries) runs — no flash of
+  // empty content on measurement-port re-renders or fresh queries.
   const ul = document.createElement('ul');
   ul.className = 'array-list';
-  container.innerHTML = '';
-  container.appendChild(ul);
 
   for (let i = 0; i < nucleosomes.length; i++) {
     if (key !== lastKey) return;
@@ -388,4 +426,7 @@ async function renderArray(nucleosomes, container, key, { dimHeader = false } = 
     await renderNucleosome(slots, body, key);
     if (key !== lastKey) return;
   }
+
+  // Atomic swap: old content → new content in a single reflow.
+  container.replaceChildren(ul);
 }
